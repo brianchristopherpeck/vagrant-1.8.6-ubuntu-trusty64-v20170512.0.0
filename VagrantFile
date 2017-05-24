@@ -1,0 +1,34 @@
+# Works with vagrant 1.8.6 and virtual box 5.1.14
+pocd_nodes = [
+	{ :host => "salt", :ip => "10.10.45.9", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false},
+	{ :host => "minion", :ip => "10.10.45.10", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false}
+]
+
+pocd_node = { :host => "ubuntu-trusty64", :ip => "10.10.45.9", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false}
+varDomain = "ubuntu-trusty64.internal"
+
+Vagrant.configure("2") do |config| # Config variable here represents the vagrant system
+	config.hostmanager.enabled = true # Enables host manager
+	config.hostmanager.manage_host = true # Enables managing host file of machine vagrant is running on
+	config.hostmanager.manage_guest = true # Enables managing the host files on the guest machines
+	config.hostmanager.ignore_private_ip = false  
+	config.hostmanager.include_offline = true
+	pocd_nodes.each  do |pocd_node| # While loop that runs config for each pocd_node from pocd_nodes array
+		config.vm.define pocd_node[:host] do |pocd_config| # cm-571-template is name of node and pocd_config is a variable we can utilize to configure this specific virtual machine
+			pocd_config.vm.box = pocd_node[:box] # This variable points to an image file
+			pocd_config.vm.network "private_network", ip: pocd_node[:ip], :netmask => "255.255.255.0" # sets up network adapter (internal)
+			pocd_config.vm.hostname = "#{pocd_node[:host]}.#{varDomain}"
+			pocd_config.hostmanager.aliases = "#{pocd_node[:host]}" # Add this alias into the hosts file of THIS virtual machine in the loop
+			pocd_config.vm.box_version = pocd_node[:version]# Points to a specific verions of box cutter vm
+			pocd_config.vm.provider :virtualbox do |v| # go to provider, in this case virtual box
+				v.name = pocd_node[:host].to_s # makes the name in virtual box pretty
+				v.gui = pocd_node[:gui] # enable the providers gui
+
+				v.customize ["modifyvm", :id, "--memory", pocd_node[:ram].to_s ] # Manually set the ram the ram
+				v.customize ["modifyvm", :id, "--cpus", pocd_node[:cpu].to_s ] # Manually set the number of CPUs
+			end
+			pocd_config.vm.synced_folder "saltstack/salt/", "/srv/salt"
+			pocd_config.vm.synced_folder "saltstack/pillar/", "/srv/pillar"
+		end
+	end
+end 
