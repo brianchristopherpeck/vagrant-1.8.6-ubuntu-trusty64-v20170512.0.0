@@ -28,7 +28,7 @@ Vagrant.configure("2") do |config| # Config variable here represents the vagrant
 				v.customize ["modifyvm", :id, "--cpus", pocd_node[:cpu].to_s ] # Manually set the number of CPUs
 			end
 			pocd_config.vm.synced_folder "srv/salt/", "/srv/salt"
-			pocd_config.vm.synced_folder "srv/pillar/", "/srv/pillar"
+			# pocd_config.vm.synced_folder "srv/pillar/", "/srv/pillar"
 			pocd_config.vm.synced_folder "srv/etc/", "/srv/etc"
 		end
 	end
