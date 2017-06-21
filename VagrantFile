@@ -1,20 +1,43 @@
 # Works with vagrant 1.8.6 and virtual box 5.1.14
 pocd_nodes = [
-	{ :host => "salt", :ip => "10.10.45.9", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false},
-	{ :host => "minion", :ip => "10.10.45.10", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false}
+	{ :host => "minion", :ip => "10.10.45.10", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false},
+	{ :host => "salt", :ip => "10.10.45.9", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false}
 ]
 
 pocd_node = { :host => "ubuntu-trusty64", :ip => "10.10.45.9", :box => "ubuntu/trusty64", :version => "20170512.0.0", :ram => 512, :cpu => 2, :gui => false}
 varDomain = "ubuntu-trusty64.internal"
 
+$script = <<SCRIPT
+echo "Installing Salt Repo"
+curl -L https://bootstrap.saltstack.com -o install_salt.sh
+echo "Installing Salt"
+sudo sh install_salt.sh -P -M
+sudo salt-key -y -A
+sudo salt '*' test.ping
+SCRIPT
+
+$script2 = <<SCRIPT
+echo "Installing Salt Repo"
+curl -L https://bootstrap.saltstack.com -o install_salt.sh
+echo "Starting salt minion"
+sudo sh install_salt.sh -P
+SCRIPT
+
 Vagrant.configure("2") do |config| # Config variable here represents the vagrant system
+	config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
 	config.hostmanager.enabled = true # Enables host manager
 	config.hostmanager.manage_host = true # Enables managing host file of machine vagrant is running on
 	config.hostmanager.manage_guest = true # Enables managing the host files on the guest machines
 	config.hostmanager.ignore_private_ip = false  
 	config.hostmanager.include_offline = true
 	pocd_nodes.each  do |pocd_node| # While loop that runs config for each pocd_node from pocd_nodes array
-		config.vm.define pocd_node[:host] do |pocd_config| # cm-571-template is name of node and pocd_config is a variable we can utilize to configure this specific virtual machine
+		config.vm.define pocd_node[:host] do |pocd_config| # pocd_node[:host] is name of node and pocd_config is a variable we can utilize to configure this specific virtual machine
+			if pocd_node[:host] == "salt"
+				pocd_config.vm.provision "shell", inline: $script
+			end
+			if pocd_node[:host] == "minion"
+				pocd_config.vm.provision "shell", inline: $script2
+			end
 			pocd_config.vm.box = pocd_node[:box] # This variable points to an image file
 			pocd_config.vm.network "private_network", ip: pocd_node[:ip], :netmask => "255.255.255.0" # sets up network adapter (internal)
 			pocd_config.vm.hostname = "#{pocd_node[:host]}.#{varDomain}"
