@@ -49,3 +49,6 @@ doc/
 # Box storage for spec
 test/vagrant-spec/boxes/*.box
 
+/srv/var
+/srv/var/www
+/srv/var/www/local/httpdocs
