@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config| # Config variable here represents the vagrant
 	config.hostmanager.ignore_private_ip = false  
 	config.hostmanager.include_offline = true
 	pocd_nodes.each  do |pocd_node| # While loop that runs config for each pocd_node from pocd_nodes array
-		config.vm.define pocd_node[:host] do |pocd_config| # cm-571-template is name of node and pocd_config is a variable we can utilize to configure this specific virtual machine
+		config.vm.define pocd_node[:host] do |pocd_config| # pocd_node[:host] is name of node and pocd_config is a variable we can utilize to configure this specific virtual machine
 			pocd_config.vm.box = pocd_node[:box] # This variable points to an image file
 			pocd_config.vm.network "private_network", ip: pocd_node[:ip], :netmask => "255.255.255.0" # sets up network adapter (internal)
 			pocd_config.vm.hostname = "#{pocd_node[:host]}.#{varDomain}"
